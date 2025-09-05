@@ -1,13 +1,18 @@
+
 import dagster as dg
 import geopandas as gpd
+gpd.options.io_engine = "pyogrio"
+
 import pandas as pd
 
 from upath import UPath as Path
 from urban_shape.resources import PathResource
 from cfc_core_utils import gdal_azure_session, storage_options
+
 import fsspec
 import shutil
 import tempfile
+from pyogrio import write_dataframe, read_dataframe
 from pathlib import Path as LocalPath
 
 class BaseManager(dg.ConfigurableIOManager):
@@ -30,7 +35,7 @@ class BaseManager(dg.ConfigurableIOManager):
         # Only create dirs for local FS; object stores don't need them
         if getattr(p, "protocol", "file") == "file":
             p.parent.mkdir(parents=True, exist_ok=True) 
-            
+
     def _as_vsi(self, p: Path) -> str:
         # For GDAL/Fiona/Rasterio on Azure
         return str(p).replace("az://", "/vsiaz/") 
@@ -53,13 +58,16 @@ class GeoDataFrameManager(BaseManager):
 
         # Stage to local temp, then upload to az://
         with tempfile.TemporaryDirectory() as td:
-            tmp = LocalPath(td) / "tmp.gpkg"
-            obj.to_file(tmp, driver="GPKG")
-            with fsspec.open(path, "wb", **storage_options(path)) as dst, open(tmp, "rb") as src:
+            tmp = LocalPath(td) / "tmp.fgb"
+            write_dataframe(obj, str(tmp), driver="FlatGeobuf")
+
+            # Single upload via fsspec (uses Azure SDK concurrency)
+            so = storage_options(path)
+            with fsspec.open(path, "wb", **so) as dst, open(tmp, "rb") as src:
                 shutil.copyfileobj(src, dst)
 
     def load_input(self, context: dg.InputContext) -> gpd.GeoDataFrame:
         path = self._get_path(context)
 
         with gdal_azure_session(path=path):
-            return gpd.read_file(self._as_vsi(path))
+            return read_dataframe(self._as_vsi(path))

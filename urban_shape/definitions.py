@@ -42,7 +42,7 @@ dataframe_manager = DataFrameManager(
 )
 
 geodataframe_manager = GeoDataFrameManager(
-    extension=".gpkg",
+    extension=".fgb",
     path_resource=path_resource,
 )
 
