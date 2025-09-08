@@ -1,0 +1,51 @@
+denue.py
+fpath = Path(path_resource.jobs_path) / "denue_2023_estimaciones.csv"
+change to parquet
+
+JOBS_PATH=az://raw/jat_slides_data/jobs
+JOBS_PATH=/Users/lizziecanamar/Downloads/jat_slides_data/jobs
+
+fpath = Path(path_resource.population_grids_path) / "final" / "zone_agebs" / "shaped" / "2020" / f"{context.partition_key}.gpkg"
+check time of read of this file 
+check if improves time to filter denue_base before join with df_agebs
+
+POPULATION_GRIDS_PATH=/Users/lizziecanamar/Documents/TEC/input_local/populations_grids_data_urban
+POPULATION_GRIDS_PATH=az://raw/jat_slides_data/populations_grids
+scian.py
+change pd.read_excel(
+            scian_path / "scian_2023_categorias_y_productos.xlsx", 
+
+
+Local:
+denue 16s
+split 11s
+
+step "coarse__points__base" in 4.65s.
+step "coarse__points__remove_unused" in 456ms.
+step "coarse__polygons__base" in 417ms.
+step "coarse__polygons__labeled" in 244ms
+total coarse = 13s
+
+step "fine__points__base" in 4.72s.
+step "fine__points__remove_unused" in 431ms.
+step "fine__polygons__base" in 373ms.
+step "fine__polygons__labeled" in 1.29s.
+total fine = 14s
+
+Cloud:
+denue 1m23s (34 when only reading from cloud but writing to local)
+split 4m17s con gpkg, 1:41 con fgb 
+
+step "coarse__points__base" in 16.58s.
+step "coarse__points__remove_unused" in 11.23s.
+step "coarse__polygons__base" in 9.46s.
+step "coarse__polygons__labeled" in 12.56s.
+
+total coarse = 57 s
+
+step "fine__points__base" in 16.91s.
+step "fine__points__remove_unused" in 12.59s.
+step "fine__polygons__base" in 9.96s.
+step "fine__polygons__labeled" in 12.29s.
+
+total fine = 1 m
